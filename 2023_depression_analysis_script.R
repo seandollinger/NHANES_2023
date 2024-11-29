@@ -1,4 +1,3 @@
-#Code to create the dataset  
 # Load necessary libraries
 library(haven)
 library(dplyr)
@@ -6,17 +5,24 @@ library(dplyr)
 # File paths for the xpt files
 file_paths <- c("DEMO_L.XPT", "PAQ_L.XPT", "SMQRTU_L.XPT", "SMQ_L.XPT", "BMX_L.XPT", "ALQ_L.XPT", "DPQ_L.XPT")
 
-# Read each xpt file into a list of data frames
-dfs <- lapply(file_paths, read_xpt)
+# Read the first file into a data frame
+merged_df <- read_xpt(file_paths[1])
 
-# Combine all data frames by row-binding them
-merged_df <- bind_rows(dfs)
+# Iteratively merge each subsequent file on 'SEQN'
+for (file in file_paths[-1]) {
+  df <- read_xpt(file)
+  merged_df <- full_join(merged_df, df, by = "SEQN")
+}
+
+# Replace any instance of 5.397605e-79 with 0
+merged_df <- merged_df %>%
+  mutate(across(everything(), ~ ifelse(. == 5.397605e-79, 0, .)))
 
 # Display the merged DataFrame
 print(head(merged_df))  # Display the first few rows
 
 # Optionally, save the merged DataFrame to a new file
-write.csv(merged_df, "merged_NHANES_data.csv", row.names = FALSE)
+write.csv(merged_df, "merged_disnewdata.csv", row.names = FALSE)
 
 
 #Code for ananlysis 
